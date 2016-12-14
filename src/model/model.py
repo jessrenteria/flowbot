@@ -31,8 +31,8 @@ class Model:
     """
 
     def __init__(self, config, preprocessor, testing):
-        self._encoder_length = config['max_length']
-        self._decoder_length = config['max_length']
+        self._encoder_length = config['encoder_length']
+        self._decoder_length = config['decoder_length']
         self._num_stacked = config['num_stacked']
         self._hidden_state_size = config['hidden_state_size']
         self._embedding_size = config['embedding_size']

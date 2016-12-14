@@ -6,6 +6,8 @@ import pickle
 import nltk
 from tqdm import tqdm
 
+from data.sampler import Sampler
+
 class Preprocessor:
     """Class for parsing and preprocessing dialogs.
     """
@@ -16,7 +18,8 @@ class Preprocessor:
         self._conversations = self._preprocess_conversations()
 
     def _preprocess_lines(self):
-        if os.path.exists(self._config['preprocessed_lines']):
+        if (self._config['reuse_data'] and
+                os.path.exists(self._config['preprocessed_lines'])):
             with open(self._config['preprocessed_lines'], 'rb') as f:
                 data = pickle.load(f)
                 return data['lines'], data['token2id'], data['id2token']
@@ -34,16 +37,19 @@ class Preprocessor:
                     token2id[token] = next_id
                     id2token[next_id] = token
                     next_id += 1
-                    return token2id[token]
+                    return token2id['<unk>']
 
-            for token in ['<start>', '<end>', '<pad>']:
+            for token in ['<start>', '<end>', '<pad>', '<unk>']:
                 getId(token)
+
+            max_length = max(self._config['encoder_length'],
+                    self._config['decoder_length'])
 
             with open(self._config['lines'], 'r', encoding='iso-8859-1') as f:
                 for line in tqdm(f):
                     line = line.split('+++$+++')
                     tokenIds = nltk.word_tokenize(line[-1])
-                    if len(tokenIds) <= self._config['max_length'] - 1:
+                    if len(tokenIds) <= max_length:
                         lines[line[0].strip()] = list(map(getId, tokenIds))
 
             with open(self._config['preprocessed_lines'], 'wb') as f:
@@ -57,7 +63,8 @@ class Preprocessor:
             return lines, token2id, id2token
 
     def _preprocess_conversations(self):
-        if not os.path.exists(self._config['preprocessed_conversations']):
+        if (self._config['reuse_data'] and
+                os.path.exists(self._config['preprocessed_conversations'])):
             with open(self._config['preprocessed_conversations'], 'rb') as f:
                 return pickle.load(f)
         else:
@@ -65,7 +72,10 @@ class Preprocessor:
 
             def valid_conversation(c):
                 c1, c2 = c
-                return c1 in self._lines and c2 in self._lines
+                return (c1 in self._lines and
+                        len(self._lines[c1]) <= self._config['encoder_length'] and
+                        c2 in self._lines and
+                        len(self._lines[c2]) + 2 <= self._config['decoder_length'])
 
             with open(self._config['conversations'], 'r', encoding='iso-8859-1') as f:
                 for line in tqdm(f):
@@ -81,16 +91,44 @@ class Preprocessor:
         return self._lines, self._token2id, self._id2token, self._conversations
 
     def start_id(self):
-        return token2id['<start>']
+        return self._token2id['<start>']
 
     def end_id(self):
-        return token2id['<end>']
+        return self._token2id['<end>']
 
     def pad_id(self):
-        return token2id['<pad>']
+        return self._token2id['<pad>']
+
+    def unk_id(self):
+        return self._token2id['<unk>']
 
     def get_vocabulary_size(self):
         return len(self._token2id)
 
+    def encode(self, s):
+        def sanitize(w):
+            return self._token2id[w] if w in self._token2id else self.unk_id()
+
+        tokens = nltk.word_tokenize(s)
+        if len(tokens) > self._config['encoder_length']:
+            return None
+
+        return list(map(sanitize, tokens))
+
     def decode(self, lst):
         return ' '.join(map(lambda x: self._id2token[x], lst))
+
+    def decode_pretty(self, lst):
+        result = []
+        bad_set = set(['<start>', '<end>', '<pad>'])
+
+        for tokenId in lst:
+            token = self._id2token[tokenId]
+            if token in bad_set:
+                continue
+            elif token == '<unk>':
+                result.append('???')
+            else:
+                result.append(token)
+
+        return ' '.join(result)
