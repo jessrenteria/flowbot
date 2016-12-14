@@ -34,6 +34,7 @@ class Preprocessor:
                     token2id[token] = next_id
                     id2token[next_id] = token
                     next_id += 1
+                    return token2id[token]
 
             for token in ['<start>', '<end>', '<pad>']:
                 getId(token)
@@ -42,7 +43,7 @@ class Preprocessor:
                 for line in tqdm(f):
                     line = line.split('+++$+++')
                     tokenIds = nltk.word_tokenize(line[-1])
-                    if len(tokenIds) <= self._config['max_length'] - 1
+                    if len(tokenIds) <= self._config['max_length'] - 1:
                         lines[line[0].strip()] = list(map(getId, tokenIds))
 
             with open(self._config['preprocessed_lines'], 'wb') as f:
@@ -56,7 +57,7 @@ class Preprocessor:
             return lines, token2id, id2token
 
     def _preprocess_conversations(self):
-        if os.path.exists(self._config['preprocessed_conversations']):
+        if not os.path.exists(self._config['preprocessed_conversations']):
             with open(self._config['preprocessed_conversations'], 'rb') as f:
                 return pickle.load(f)
         else:
@@ -77,7 +78,19 @@ class Preprocessor:
             return conversations
 
     def get_data(self):
-        return self._lines, self._conversations
+        return self._lines, self._token2id, self._id2token, self._conversations
+
+    def start_id(self):
+        return token2id['<start>']
+
+    def end_id(self):
+        return token2id['<end>']
+
+    def pad_id(self):
+        return token2id['<pad>']
+
+    def get_vocabulary_size(self):
+        return len(self._token2id)
 
     def decode(self, lst):
         return ' '.join(map(lambda x: self._id2token[x], lst))
