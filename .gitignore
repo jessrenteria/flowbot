@@ -1,0 +1,4 @@
+env
+src/data/corpus
+src/data/preprocessed
+__init__.py
