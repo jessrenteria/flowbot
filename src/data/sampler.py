@@ -26,19 +26,20 @@ class Sampler:
         pad_id = self._preprocessor.pad_id()
 
         for idx in range(len(examples)):
-            example = example[idx]
+            example = [self._lines[lineId] for lineId in examples[idx]]
 
             batch.encoder_inputs.append(list(reversed(example[0])))
             batch.decoder_inputs.append([start_id] + example[1] + [end_id])
-            batch.decoder_targets.append(batch.decoder_inputs[1:])
+            batch.decoder_targets.append(batch.decoder_inputs[idx][1:])
 
             padding = self._config['encoder_length'] - len(batch.encoder_inputs[idx])
             batch.encoder_inputs[idx] = [pad_id] * padding + batch.encoder_inputs[idx]
             padding = self._config['decoder_length'] - len(batch.decoder_inputs[idx])
             batch.decoder_inputs[idx] += [pad_id] * padding
-            padding += 1
+            padding = self._config['decoder_length'] - len(batch.decoder_targets[idx])
             batch.decoder_targets[idx] += [pad_id] * padding
-            batch.weights.append([1.0] * len(batch.decoder_targets[idx]) + [0.0] * padding)
+            batch.decoder_weights.append([1.0] * (len(batch.decoder_targets[idx]) - padding)
+                    + [0.0] * padding)
 
         encoder_inputsT = []
 
@@ -83,4 +84,3 @@ class Sampler:
             batches.append(self.get_batch(self._conversations[idx:bound]))
 
         return batches
-

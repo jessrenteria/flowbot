@@ -6,8 +6,6 @@ import pickle
 import nltk
 from tqdm import tqdm
 
-from data.sampler import Sampler
-
 class Preprocessor:
     """Class for parsing and preprocessing dialogs.
     """
@@ -24,6 +22,7 @@ class Preprocessor:
                 data = pickle.load(f)
                 return data['lines'], data['token2id'], data['id2token']
         else:
+            print('Preprocessing lines...')
             lines = {}
             token2id = {}
             id2token = {}
@@ -37,9 +36,9 @@ class Preprocessor:
                     token2id[token] = next_id
                     id2token[next_id] = token
                     next_id += 1
-                    return token2id['<unk>']
+                    return 0
 
-            for token in ['<start>', '<end>', '<pad>', '<unk>']:
+            for token in ['<unk>', '<start>', '<end>', '<pad>']:
                 getId(token)
 
             max_length = max(self._config['encoder_length'],
@@ -48,9 +47,10 @@ class Preprocessor:
             with open(self._config['lines'], 'r', encoding='iso-8859-1') as f:
                 for line in tqdm(f):
                     line = line.split('+++$+++')
-                    tokenIds = nltk.word_tokenize(line[-1])
-                    if len(tokenIds) <= max_length:
-                        lines[line[0].strip()] = list(map(getId, tokenIds))
+                    tokens = nltk.word_tokenize(line[-1])
+                    if len(tokens) <= max_length:
+                        tokens = map(lambda x: x.lower(), tokens)
+                        lines[line[0].strip()] = list(map(getId, tokens))
 
             with open(self._config['preprocessed_lines'], 'wb') as f:
                 data = {
@@ -68,6 +68,7 @@ class Preprocessor:
             with open(self._config['preprocessed_conversations'], 'rb') as f:
                 return pickle.load(f)
         else:
+            print('Preprocessing conversations...')
             conversations = []
 
             def valid_conversation(c):
@@ -123,12 +124,15 @@ class Preprocessor:
         bad_set = set(['<start>', '<end>', '<pad>'])
 
         for tokenId in lst:
-            token = self._id2token[tokenId]
+            token = self._id2token[tokenId[0][0]]
             if token in bad_set:
                 continue
             elif token == '<unk>':
                 result.append('???')
             else:
                 result.append(token)
+
+        if result == None:
+            return None
 
         return ' '.join(result)

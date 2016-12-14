@@ -1,5 +1,6 @@
 """Module for creating a seq2seq model.
 """
+import numpy as np
 import tensorflow as tf
 
 class Batch:
@@ -46,6 +47,7 @@ class Model:
         self._model = self._buildGraph()
 
     def _buildGraph(self):
+        print('Building graph...')
         output_projection = _LinearWithBiasOp(
                 [self._hidden_state_size, self._vocabulary_size],
                 scope='OutputProjection')
@@ -85,7 +87,8 @@ class Model:
                     self._softmax_sample_size, self._vocabulary_size)
 
         if self._testing:
-            self._outputs = [output_projection(output) for output in outputs]
+            self._outputs = [tf.argmax(output_projection.__call__(output), axis=1)
+                    for output in outputs]
         else:
             with tf.name_scope('loss'):
                 self._loss = tf.nn.seq2seq.sequence_loss(
@@ -95,27 +98,28 @@ class Model:
                             softmax_loss_function=sampled_softmax
                         )
 
+            self._loss_summary = tf.summary.scalar('Sequence Loss', self._loss)
             opt = tf.train.AdadeltaOptimizer(learning_rate=self._learning_rate)
             self._step = opt.minimize(self._loss)
 
     def step(self, batch):
-        feedDict = {}
+        feed_dict = {}
         ops = []
 
         if self._testing:
             for idx in range(self._encoder_length):
-                feedDict[self._encoder_inputs[idx]] = batch.encoder_inputs[idx]
-            for idx in range(self._decoder_length):
-                feedDict[self._decoder_inputs[idx]] = batch.decoder_inputs[idx]
-                feedDict[self._decoder_targets[idx]] = batch.decoder_targets[idx]
-                feedDict[self._decoder_weights[idx]] = batch.decoder_weights[idx]
+                feed_dict[self._encoder_inputs[idx]] = batch.encoder_inputs[idx]
 
-            ops = [self._step, self._loss]
+            feed_dict[self._decoder_inputs[0]] = [self._preprocessor.start_id()]
+            ops = [self._outputs]
         else:
             for idx in range(self._encoder_length):
-                feedDict[self._encoder_inputs[idx]] = batch.encoder_inputs[idx]
+                feed_dict[self._encoder_inputs[idx]] = batch.encoder_inputs[idx]
+            for idx in range(self._decoder_length):
+                feed_dict[self._decoder_inputs[idx]] = batch.decoder_inputs[idx]
+                feed_dict[self._decoder_targets[idx]] = batch.decoder_targets[idx]
+                feed_dict[self._decoder_weights[idx]] = batch.decoder_weights[idx]
 
-            feedDict[self._decoder_inputs[0]] = [self._preprocessor.start_id()]
-            ops = [self._outputs]
+            ops = [self._step, self._loss, self._loss_summary]
 
-        return ops, feedDict
+        return ops, feed_dict
