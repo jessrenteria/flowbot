@@ -108,6 +108,7 @@ class Preprocessor:
 
     def encode(self, s):
         def sanitize(w):
+            w = w.lower()
             return self._token2id[w] if w in self._token2id else self.unk_id()
 
         tokens = nltk.word_tokenize(s)
@@ -121,12 +122,14 @@ class Preprocessor:
 
     def decode_pretty(self, lst):
         result = []
-        bad_set = set(['<start>', '<end>', '<pad>'])
+        bad_set = set(['<start>', '<pad>'])
 
         for tokenId in lst:
             token = self._id2token[tokenId[0][0]]
             if token in bad_set:
                 continue
+            elif token == '<end>':
+                break
             elif token == '<unk>':
                 result.append('???')
             else:

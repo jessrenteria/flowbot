@@ -32,7 +32,9 @@ class Flowbot:
         if latest == None:
             self._sess.run(tf.global_variables_initializer())
         else:
+            print('Restoring session...')
             self._saver.restore(self._sess, latest)
+            print('Session restored.')
 
     def _save_model(self):
         print('Saving model...')
@@ -76,7 +78,7 @@ class Flowbot:
                 print("I don't understand sentences that long.")
                 continue
 
-            batch = self._sampler.get_batch([(encoded, [])])
+            batch = self._sampler.get_batch([(encoded, [])], testing=True)
             ops, feed_dict = self._model.step(batch)
             outputs = self._sess.run(ops, feed_dict=feed_dict)
             decoded = self._preprocessor.decode_pretty(outputs)

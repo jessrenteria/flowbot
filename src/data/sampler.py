@@ -18,7 +18,7 @@ class Sampler:
         self._preprocessor = preprocessor
         self._lines, _, _, self._conversations = preprocessor.get_data()
 
-    def get_batch(self, examples):
+    def get_batch(self, examples, testing=False):
         batch = Batch()
 
         start_id = self._preprocessor.start_id()
@@ -26,7 +26,12 @@ class Sampler:
         pad_id = self._preprocessor.pad_id()
 
         for idx in range(len(examples)):
-            example = [self._lines[lineId] for lineId in examples[idx]]
+            if testing:
+                example = examples[idx]
+            else:
+                example = [self._lines[lineId] for lineId in examples[idx]]
+
+            #  print(example)
 
             batch.encoder_inputs.append(list(reversed(example[0])))
             batch.decoder_inputs.append([start_id] + example[1] + [end_id])
