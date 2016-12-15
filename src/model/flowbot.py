@@ -60,7 +60,7 @@ class Flowbot:
                 average_loss /= batch_count
                 print('Average loss: {}'.format(average_loss))
 
-                if epoch % 5 == 0:
+                if epoch % 2 == 0:
                     self._save_model()
         except (KeyboardInterrupt, SystemExit):
             print('Saving and exiting...')
@@ -69,13 +69,18 @@ class Flowbot:
 
     def interact(self):
         print('Start a conversation:')
+        print(' ' * 4 + "type 'quit' to exit\n")
 
         while True:
             sentence = input('> ')
+            print('')
+            if sentence == 'quit':
+                print(' ' * 4 + 'Goodbye...\n')
+                break
             encoded = self._preprocessor.encode(sentence)
 
             if encoded == None:
-                print("I don't understand sentences that long.")
+                print("I don't understand sentences that long.\n")
                 continue
 
             batch = self._sampler.get_batch([(encoded, [])], testing=True)
@@ -84,6 +89,7 @@ class Flowbot:
             decoded = self._preprocessor.decode_pretty(outputs)
 
             if decoded == None:
-                print("FATAL ERROR!")
+                print('<failed to decode>\n')
+                continue
 
-            print('    ' + decoded)
+            print(' ' * 4 + decoded + '\n')
