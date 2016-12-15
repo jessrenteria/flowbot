@@ -19,6 +19,48 @@ or start a training session by running
 Configuration options are encapsulated in config.ini, and are
 mostly self-explanatory.
 
+# Example conversations
+
+    > Who are you?
+
+        i
+
+    > Who am I?
+
+        you
+
+    > Can you talk?
+
+        yes
+
+    > Can you say more than one word in your current state?
+
+        no
+
+    > Is that because it's easier to minimize loss with one word responses?
+
+        yes
+
+    > What is your name?
+
+        ???
+
+    > Are you conscious?
+
+        yes
+
+    > Are you certain?
+
+        no
+
+    > Are you an algorithm?
+
+        no
+
+    > Are you a statistical model?
+
+        yes
+
 # Dependencies
 
 - Python 3.5.x
