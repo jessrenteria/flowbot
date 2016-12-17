@@ -1,8 +1,8 @@
-# flowbot, a Tensorflow chatbot
+# Flowbot, a Tensorflow chatbot
 
-flowbot is a Tensorflow chatbot using seq2seq at its core.
+Flowbot is a Tensorflow chatbot using seq2seq at its core.
 
-flowbot uses an encoder RNN to compute compress a sequence
+Flowbot uses an encoder RNN to compute compress a sequence
 of words into a *thought vector*, which is then decompressed
 by a decoder RNN.
 
@@ -10,14 +10,21 @@ by a decoder RNN.
 
 You can start an interactive session by running
 
-    python3 run.py
+    python3 run.py --bot bot_name
 
 or start a training session by running
 
-    python3 run.py --train
+    python3 run.py --bot bot_name --train
 
-Configuration options are encapsulated in config.ini, and are
-mostly self-explanatory.
+Create a new bot by creating the file
+
+    bots/bot_name/config.ini
+
+General model parameters and training options
+need to be defined here.
+
+Other configuration options are encapsulated in
+global_config.ini, and are mostly self-explanatory.
 
 # Example conversations
 
