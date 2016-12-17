@@ -1,5 +1,6 @@
 """Module for chatbot
 """
+import os
 from tqdm import tqdm
 import tensorflow as tf
 
@@ -8,40 +9,57 @@ from data.preprocessor import Preprocessor
 from data.sampler import Sampler
 
 class Flowbot:
-    """Top-level class for chatbot
+    """Top-level class for chatbot.
     """
 
     def __init__(self, config, testing):
         self._config = config
-        self._step_num = 0
-        self._checkpoint_file = self._config['checkpoint_dir'] + self._config['checkpoint_name']
         self._preprocessor = Preprocessor(self._config)
         self._sampler = Sampler(self._config, self._preprocessor)
         self._writer = tf.summary.FileWriter(self._config['tensorboard_dir'])
         self._model = Model(config, self._preprocessor, testing)
-        self._saver = tf.train.Saver()
+        self._saver = tf.train.Saver(max_to_keep=2)
         self._sess = tf.Session()
         self._load_model()
 
-        if self._step_num == 0:
-            self._writer.add_graph(self._sess.graph)
-
     def _load_model(self):
+        """Loads or initializes model parameters.
+        """
         latest = tf.train.latest_checkpoint(self._config['checkpoint_dir'])
 
         if latest == None:
+            print('Initializing a new model...')
             self._sess.run(tf.global_variables_initializer())
+            self._writer.add_graph(self._sess.graph)
+            print('Model initialized.')
         else:
             print('Restoring session...')
             self._saver.restore(self._sess, latest)
+
+            if os.path.exists(self._config['train_info']):
+                with open(self._config['train_info'], 'r') as f:
+                    self._step_num = int(f.read().strip())
+            else:
+                self._step_num = 0
+
             print('Session restored.')
 
     def _save_model(self):
+        """Saves model parameters.
+        """
         print('Saving model...')
-        self._saver.save(self._sess, self._checkpoint_file, global_step=self._step_num)
+        self._saver.save(self._sess,
+                self._config['checkpoint_file'],
+                global_step=self._step_num)
+        with open(self._config['train_info'], 'w') as f:
+            f.write('{}\n'.format(self._step_num))
         print('Model saved.')
 
     def train(self):
+        """Trains model for a set number of epochs.
+
+        Can stop training at any time via ctrl-c.
+        """
         try:
             for epoch in range(self._config['num_epochs']):
                 print('Epoch {}'.format(epoch + 1))
@@ -60,7 +78,7 @@ class Flowbot:
                 average_loss /= batch_count
                 print('Average loss: {}'.format(average_loss))
 
-                if epoch % 2 == 0:
+                if epoch % self._config['epochs_between_save'] == 0:
                     self._save_model()
         except (KeyboardInterrupt, SystemExit):
             print('Saving and exiting...')

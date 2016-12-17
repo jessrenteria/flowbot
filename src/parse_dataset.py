@@ -1,6 +1,15 @@
-from utils.config import get_configs
+import argparse
+from utils.config import get_config
 from data.preprocessor import Preprocessor
 
-config = get_configs()
-config['reuse_data'] = False
-p = Preprocessor(config)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--bot', choices=['lstm', 'dizzy'], default='lstm')
+    args = parser.parse_args()
+
+    config = get_config(args.bot)
+    config['reuse_data'] = False
+    p = Preprocessor(config)
+
+if __name__ == '__main__':
+    main()

@@ -3,6 +3,8 @@
 import numpy as np
 import tensorflow as tf
 
+from dizzy.layers.dizzyRNNCellOpt import DizzyRNNCellOpt
+
 class Batch:
     def __init__(self):
         self.encoder_inputs = []
@@ -32,6 +34,7 @@ class Model:
     """
 
     def __init__(self, config, preprocessor, testing):
+        self._config = config
         self._encoder_length = config['encoder_length']
         self._decoder_length = config['decoder_length']
         self._num_stacked = config['num_stacked']
@@ -44,16 +47,24 @@ class Model:
         self._preprocessor = preprocessor
         self._vocabulary_size = preprocessor.get_vocabulary_size()
 
+        print('Building graph...')
         self._model = self._buildGraph()
+        print('Graph built.')
 
     def _buildGraph(self):
-        print('Building graph...')
         output_projection = _LinearWithBiasOp(
                 [self._hidden_state_size, self._vocabulary_size],
                 scope='OutputProjection')
 
-        cell = tf.nn.rnn_cell.LSTMCell(self._hidden_state_size)
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * self._num_stacked)
+        cell = None
+
+        if self._config['cell'] == 'dizzy':
+            cell = DizzyRNNCellOpt(self._hidden_state_size,
+                    num_rots=self._config['num_rots'])
+        else:
+            cell = tf.nn.rnn_cell.LSTMCell(self._hidden_state_size,
+                    initializer=tf.orthogonal_initializer())
+            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * self._num_stacked)
 
         with tf.name_scope('Encoder'):
             self._encoder_inputs = [tf.placeholder(tf.int32, [None, ])

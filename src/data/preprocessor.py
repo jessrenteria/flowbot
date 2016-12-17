@@ -36,7 +36,7 @@ class Preprocessor:
                     token2id[token] = next_id
                     id2token[next_id] = token
                     next_id += 1
-                    return 0
+                    return token2id[token]
 
             for token in ['<unk>', '<start>', '<end>', '<pad>']:
                 getId(token)
