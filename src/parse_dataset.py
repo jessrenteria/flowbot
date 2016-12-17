@@ -4,7 +4,7 @@ from data.preprocessor import Preprocessor
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--bot', choices=['lstm', 'dizzy'], default='lstm')
+    parser.add_argument('--bot', default='lstm_attention')
     args = parser.parse_args()
 
     config = get_config(args.bot)

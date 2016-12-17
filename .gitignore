@@ -3,3 +3,8 @@ src/data/corpus
 src/data/preprocessed
 __init__.py
 __pycache__
+src/dizzy
+src/bots/dizzy
+src/bots/*/checkpoints
+src/bots/*/tensorboard
+src/bots/*/train.info

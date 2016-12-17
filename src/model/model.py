@@ -72,16 +72,30 @@ class Model:
             self._decoder_weights = [tf.placeholder(tf.float32, [None, ])
                     for _ in range(self._decoder_length)]
 
-        outputs, states = tf.nn.seq2seq.embedding_rnn_seq2seq(
-                    self._encoder_inputs,
-                    self._decoder_inputs,
-                    cell,
-                    self._vocabulary_size,
-                    self._vocabulary_size,
-                    embedding_size=self._embedding_size,
-                    output_projection=output_projection.get_params(),
-                    feed_previous=self._testing
-                )
+        outputs, states = None, None
+
+        if self._config['attention']:
+            outputs, states = tf.nn.seq2seq.embedding_attention_seq2seq(
+                        self._encoder_inputs,
+                        self._decoder_inputs,
+                        cell,
+                        self._vocabulary_size,
+                        self._vocabulary_size,
+                        self._embedding_size,
+                        output_projection=output_projection.get_params(),
+                        feed_previous=self._testing
+                    )
+        else:
+            outputs, states = tf.nn.seq2seq.embedding_rnn_seq2seq(
+                        self._encoder_inputs,
+                        self._decoder_inputs,
+                        cell,
+                        self._vocabulary_size,
+                        self._vocabulary_size,
+                        self._embedding_size,
+                        output_projection=output_projection.get_params(),
+                        feed_previous=self._testing
+                    )
 
         def sampled_softmax(inputs, targets):
             W, b = output_projection.get_params()

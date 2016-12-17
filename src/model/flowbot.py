@@ -32,6 +32,7 @@ class Flowbot:
             self._sess.run(tf.global_variables_initializer())
             self._writer.add_graph(self._sess.graph)
             print('Model initialized.')
+            self._step_num = 0
         else:
             print('Restoring session...')
             self._saver.restore(self._sess, latest)

@@ -6,7 +6,7 @@ from model.flowbot import Flowbot
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', action='store_true')
-    parser.add_argument('--bot', choices=['lstm', 'dizzy'], default='lstm')
+    parser.add_argument('--bot', default='lstm_attention')
     args = parser.parse_args()
 
     testing = not args.train
