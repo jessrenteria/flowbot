@@ -3,8 +3,6 @@
 import numpy as np
 import tensorflow as tf
 
-from dizzy.layers.dizzyRNNCellOpt import DizzyRNNCellOpt
-
 class Batch:
     def __init__(self):
         self.encoder_inputs = []
@@ -58,13 +56,9 @@ class Model:
 
         cell = None
 
-        if self._config['cell'] == 'dizzy':
-            cell = DizzyRNNCellOpt(self._hidden_state_size,
-                    num_rots=self._config['num_rots'])
-        else:
-            cell = tf.nn.rnn_cell.LSTMCell(self._hidden_state_size,
-                    initializer=tf.orthogonal_initializer())
-            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * self._num_stacked)
+        cell = tf.nn.rnn_cell.LSTMCell(self._hidden_state_size,
+                initializer=tf.orthogonal_initializer())
+        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * self._num_stacked)
 
         with tf.name_scope('Encoder'):
             self._encoder_inputs = [tf.placeholder(tf.int32, [None, ])
